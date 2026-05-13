@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
 import { Droplets, Lock, Mail } from 'lucide-react';
+import api from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -21,24 +22,15 @@ export default function Login() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('authToken', data.data.token);
-        navigate('/dashboard');
-      } else {
-        setError(data.message || 'Login failed');
-      }
+      //  FIX 1: uses api service (env-aware base URL, no more localhost)
+      //  FIX 2: api.js unwraps { success, data } so data.token works correctly
+      const data = await api.post('/auth/login', { email, password });
+      localStorage.setItem('authToken', data.token);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
