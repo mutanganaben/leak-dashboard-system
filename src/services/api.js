@@ -16,7 +16,7 @@ const handleResponse = async (response) => {
       window.location.href = '/login';
     }
     const error = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-    throw new Error(error.message || `Error ${response.status}: ${response.statusText}`);
+    throw new Error(error.message || error.error || `Error ${response.status}: ${response.statusText}`);
   }
   
   const responseData = await response.json();

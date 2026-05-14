@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useContext } from "react";
 import {
   AreaChart,
   Area,
@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import "./RealTimePressureChart.css";
 import api from "../../services/api";
+import { NodeContext } from "../../context/NodeContext";
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -28,10 +29,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function RealTimePressureChart() {
+  const { settings } = useContext(NodeContext);
   const [data, setData] = useState([]);
   const [isLive, setIsLive] = useState(true);
-  const [loading, setLoading] = useState(false);
   const timerRef = useRef(null);
+  const updateIntervalSeconds = Math.max(Number(settings.updateInterval) || 3, 1);
+  const safePercent = Math.round(settings.safeThreshold * 100);
+  const cautionPercent = Math.round(settings.warningThreshold * 100);
 
   const fetchHistory = async () => {
     try {
@@ -46,16 +50,13 @@ export default function RealTimePressureChart() {
 
   useEffect(() => {
     fetchHistory();
-
-    // Update every 30 seconds (standardized polling)
-    timerRef.current = setInterval(fetchHistory, 30000);
+    timerRef.current = setInterval(fetchHistory, updateIntervalSeconds * 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [updateIntervalSeconds]);
 
-  // Calculate 6 evenly spaced ticks for the X-Axis
   const xTicks = useMemo(() => {
     if (data.length < 2) return [];
     const min = data[0].timestamp;
@@ -79,7 +80,7 @@ export default function RealTimePressureChart() {
       <div className="rt-card-header">
         <div className="rt-header-left">
           <h3 className="rt-card-title">Real-time Pressure Monitoring</h3>
-          <p className="rt-card-subtitle">Last 2 hours • Updates every 5 seconds</p>
+          <p className="rt-card-subtitle">Last 2 hours - updates every {updateIntervalSeconds} seconds</p>
         </div>
         <div className="rt-header-right">
           <div className={`rt-live-indicator ${isLive ? 'active' : ''}`}>
@@ -98,14 +99,14 @@ export default function RealTimePressureChart() {
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              vertical={true} 
-              horizontal={true} 
-              stroke="#e2e8f0" 
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={true}
+              horizontal={true}
+              stroke="#e2e8f0"
             />
-            <XAxis 
-              dataKey="timestamp" 
+            <XAxis
+              dataKey="timestamp"
               type="number"
               domain={['dataMin', 'dataMax']}
               ticks={xTicks}
@@ -116,51 +117,51 @@ export default function RealTimePressureChart() {
               height={50}
               dy={10}
             />
-            <YAxis 
+            <YAxis
               domain={[0, 100]}
               axisLine={{ stroke: '#cbd5e1', strokeWidth: 1 }}
               tickLine={{ stroke: '#cbd5e1' }}
               tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
               ticks={[0, 25, 50, 75, 100]}
-              label={{ 
-                value: 'Pressure (PSI)', 
-                angle: -90, 
-                position: 'insideLeft', 
-                offset: -5, 
-                fill: '#64748b', 
-                fontSize: 12, 
-                fontWeight: 600 
+              label={{
+                value: 'Pressure (PSI)',
+                angle: -90,
+                position: 'insideLeft',
+                offset: -5,
+                fill: '#64748b',
+                fontSize: 12,
+                fontWeight: 600
               }}
             />
-            <Tooltip 
-              content={<CustomTooltip />} 
-              cursor={{ stroke: '#94a3b8', strokeWidth: 1.5, strokeDasharray: '4 4' }} 
-            />
-            
-            <ReferenceLine 
-              y={70} 
-              stroke="#22c55e" 
-              strokeWidth={1.5}
-              strokeDasharray="4 4" 
-              label={{ position: 'right', value: 'Safe (70%)', fill: '#22c55e', fontSize: 11, fontWeight: 600, offset: 10 }} 
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: '#94a3b8', strokeWidth: 1.5, strokeDasharray: '4 4' }}
             />
 
-            <ReferenceLine 
-              y={85} 
-              stroke="#eab308" 
+            <ReferenceLine
+              y={safePercent}
+              stroke="#22c55e"
               strokeWidth={1.5}
-              strokeDasharray="4 4" 
-              label={{ position: 'right', value: 'Caution (85%)', fill: '#eab308', fontSize: 11, fontWeight: 600, offset: 10 }} 
+              strokeDasharray="4 4"
+              label={{ position: 'right', value: `Safe (${safePercent}%)`, fill: '#22c55e', fontSize: 11, fontWeight: 600, offset: 10 }}
             />
 
-            <ReferenceLine 
-              y={100} 
-              stroke="#ef4444" 
+            <ReferenceLine
+              y={cautionPercent}
+              stroke="#eab308"
               strokeWidth={1.5}
-              strokeDasharray="4 4" 
-              label={{ position: 'right', value: 'Threshold', fill: '#ef4444', fontSize: 11, fontWeight: 600, offset: 10 }} 
+              strokeDasharray="4 4"
+              label={{ position: 'right', value: `Caution (${cautionPercent}%)`, fill: '#eab308', fontSize: 11, fontWeight: 600, offset: 10 }}
             />
-            
+
+            <ReferenceLine
+              y={100}
+              stroke="#ef4444"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              label={{ position: 'right', value: 'Threshold', fill: '#ef4444', fontSize: 11, fontWeight: 600, offset: 10 }}
+            />
+
             <Area
               type="monotone"
               dataKey="pressure"
@@ -171,9 +172,9 @@ export default function RealTimePressureChart() {
               animationDuration={500}
               isAnimationActive={true}
             />
-            
-            <Legend 
-              verticalAlign="bottom" 
+
+            <Legend
+              verticalAlign="bottom"
               align="center"
               content={() => (
                 <div className="rt-custom-legend">

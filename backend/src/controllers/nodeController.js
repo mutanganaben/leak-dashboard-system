@@ -3,6 +3,11 @@ const PressureReading = require('../models/PressureReading');
 const asyncHandler = require('../middleware/asyncHandler');
 const ErrorResponse = require('../middleware/errorResponse');
 
+const normalizeDeviceId = (deviceId) => {
+  if (!deviceId) return undefined;
+  return String(deviceId).trim().toLowerCase();
+};
+
 // @desc    Get all nodes
 // @route   GET /api/nodes
 // @access  Private
@@ -23,6 +28,7 @@ const getNodes = asyncHandler(async (req, res, next) => {
     {
       $addFields: {
         pressure: { $ifNull: [{ $arrayElemAt: ['$latestReading.pressure', 0] }, 0] },
+        lastUpdate: { $arrayElemAt: ['$latestReading.timestamp', 0] },
         id: '$_id'
       }
     },
@@ -37,11 +43,14 @@ const getNodes = asyncHandler(async (req, res, next) => {
 // @route   POST /api/nodes
 // @access  Private
 const createNode = asyncHandler(async (req, res, next) => {
-  const { name, location, maop, pipeAge, latitude, longitude } = req.body;
+  const { name, location, maop, latitude, longitude } = req.body;
+  const pipeAge = req.body.pipeAge ?? req.body.pipe_age;
+  const deviceId = normalizeDeviceId(req.body.deviceId);
 
   const node = await Node.create({
     name,
     location,
+    deviceId,
     maop,
     pipeAge,
     latitude,
@@ -69,10 +78,21 @@ const deleteNode = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/nodes/:id
 // @access  Private
 const updateNode = asyncHandler(async (req, res, next) => {
+  const updates = { ...req.body };
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'deviceId')) {
+    updates.deviceId = normalizeDeviceId(updates.deviceId);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'pipe_age') && !Object.prototype.hasOwnProperty.call(updates, 'pipeAge')) {
+    updates.pipeAge = updates.pipe_age;
+    delete updates.pipe_age;
+  }
+
   const node = await Node.findByIdAndUpdate(
     req.params.id,
-    req.body,
-    { new: true, runValidators: true }
+    updates,
+    { returnDocument: 'after', runValidators: true }
   );
 
   if (!node) {

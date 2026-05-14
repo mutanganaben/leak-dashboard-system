@@ -11,6 +11,18 @@ const alertSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  nodeName: {
+    type: String,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true
+  },
+  utilization: {
+    type: Number,
+    min: 0
+  },
   level: {
     type: String,
     enum: ["caution", "warning"],
@@ -23,6 +35,21 @@ const alertSchema = new mongoose.Schema({
   acknowledged: {
     type: Boolean,
     default: false
+  },
+  acknowledgedAt: {
+    type: Date
+  },
+  resolvedAt: {
+    type: Date
+  },
+  autoAcknowledged: {
+    type: Boolean,
+    default: false
+  },
+  notificationChannels: {
+    email: { type: Boolean, default: false },
+    sms: { type: Boolean, default: false },
+    push: { type: Boolean, default: false }
   },
   createdAt: {
     type: Date,

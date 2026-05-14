@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import "./Alerts.css";
 import { Bell, BellOff, AlertCircle, Filter, Check, X, AlertTriangle, InfoIcon } from "lucide-react";
 import api from "../services/api";
+import toast from "react-hot-toast";
+import { NodeContext } from "../context/NodeContext";
 
 export default function Alerts() {
+  const { settings } = useContext(NodeContext);
   const [alerts, setAlerts] = useState([]);
   const [filter, setFilter] = useState("All");
   const [showAcknowledged, setShowAcknowledged] = useState(true);
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
   const [loading, setLoading] = useState(false);
+  const [syncSummary, setSyncSummary] = useState(null);
 
   const fetchAlerts = async () => {
     try {
       setLoading(true);
       const data = await api.get('/alerts');
-      setAlerts(data);
+      const nextAlerts = Array.isArray(data) ? data : data.alerts || [];
+      setAlerts(nextAlerts);
+      setSyncSummary(Array.isArray(data) ? null : data.syncSummary);
     } catch (error) {
       console.error('Error fetching alerts:', error);
+      toast.error(error.message || 'Unable to load alerts.');
     } finally {
       setLoading(false);
     }
@@ -24,10 +31,11 @@ export default function Alerts() {
 
   useEffect(() => {
     fetchAlerts();
-    // In a production app without Socket.IO, we might set up a poll interval
-    // const interval = setInterval(fetchAlerts, 30000);
-    // return () => clearInterval(interval);
-  }, []);
+    const intervalMs = Math.max(Number(settings.updateInterval) || 3, 1) * 1000;
+    const interval = setInterval(fetchAlerts, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [settings.updateInterval]);
 
   const handleAcknowledge = async (id) => {
     try {
@@ -35,8 +43,10 @@ export default function Alerts() {
       setAlerts(prev => prev.map(alert => 
         alert._id === id ? { ...alert, acknowledged: true } : alert
       ));
+      toast.success('Alert acknowledged.');
     } catch (error) {
       console.error('Error acknowledging alert:', error);
+      toast.error(error.message || 'Unable to acknowledge alert.');
     }
   };
 
@@ -78,6 +88,15 @@ export default function Alerts() {
         <h2 className="alerts-header-title">Alert Management</h2>
         <p className="alerts-header-subtitle">Monitor and manage system notifications</p>
       </div>
+
+      {syncSummary?.maintenanceMode && (
+        <div className="alerts-filter-bar" style={{ borderColor: '#fde047', backgroundColor: '#fefce8' }}>
+          <div className="alerts-filter-label" style={{ color: '#a16207' }}>
+            <AlertTriangle size={18} className="alerts-filter-icon" />
+            <span>Maintenance mode is active. New alert creation is paused.</span>
+          </div>
+        </div>
+      )}
 
       <div className="alerts-summary-grid">
         <div className="alerts-summary-card">
@@ -148,8 +167,8 @@ export default function Alerts() {
                   <div className="alerts-item-content">
                     <div className="alerts-item-header">
                       <div>
-                        <h4 className="alerts-item-title">{alert.nodeName}</h4>
-                        <p className="alerts-item-location">{alert.message.split('detected on ')[1]?.split(' at')[0] || "System Node"}</p>
+                        <h4 className="alerts-item-title">{alert.nodeName || "System Node"}</h4>
+                        <p className="alerts-item-location">{alert.location || "Unknown location"}</p>
                       </div>
                       
                       <div className="alerts-badge-group">
@@ -169,7 +188,10 @@ export default function Alerts() {
                     </p>
 
                     <div className="alerts-item-footer">
-                      <p className="alerts-item-timestamp">{new Date(alert.createdAt).toLocaleString()}</p>
+                      <p className="alerts-item-timestamp">
+                        {new Date(alert.createdAt).toLocaleString()}
+                        {alert.utilization !== undefined ? ` • ${alert.utilization}% utilization` : ''}
+                      </p>
                       <div className="alerts-action-group">
                         {!alert.acknowledged && (
                           <button onClick={() => handleAcknowledge(alert._id)} className="alerts-ack-btn">
@@ -189,8 +211,8 @@ export default function Alerts() {
         ) : (
           <div className="alerts-empty-state">
             <Bell className="alerts-empty-icon" />
-            <p className="alerts-empty-title">No system signals found matching criteria.</p>
-            <p className="alerts-empty-subtitle">You're completely caught up!</p>
+            <p className="alerts-empty-title">{loading ? 'Loading alerts...' : 'No system signals found matching criteria.'}</p>
+            <p className="alerts-empty-subtitle">{loading ? 'Loading alert history.' : "You're completely caught up!"}</p>
           </div>
         )}
       </div>

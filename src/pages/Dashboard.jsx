@@ -4,7 +4,7 @@ import { NodeContext } from "../context/NodeContext";
 import PressureChart from "../components/charts/PressureChart";
 import RealTimePressureChart from "../components/charts/RealTimePressureChart";
 import DashboardSensorRow from "../components/cards/DashboardSensorRow";
-import { Radio, Activity, TrendingUp, AlertCircle, Gauge, Zap, Droplets } from "lucide-react";
+import { Radio, Activity, TrendingUp, AlertCircle, Gauge, Zap, Droplets, WifiOff } from "lucide-react";
 import api from "../services/api";
 
 export default function Dashboard() {
@@ -16,6 +16,7 @@ export default function Dashboard() {
     cautionCount: 0,
     warningCount: 0,
     offlineCount: 0,
+    totalSensors: 0,
     averagePressure: 0,
     averageMaop: 0,
     utilization: 0,
@@ -36,13 +37,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardSummary();
-  }, []);
+    const intervalMs = Math.max(Number(settings.updateInterval) || 3, 1) * 1000;
+    const interval = setInterval(fetchDashboardSummary, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [settings.safeThreshold, settings.warningThreshold, settings.updateInterval]);
 
   const {
     activeSensors,
     safeCount,
     cautionCount,
     warningCount,
+    offlineCount,
     averagePressure: systemPressure,
     averageMaop: systemMaop,
     utilization
@@ -60,6 +66,9 @@ export default function Dashboard() {
     systemStatusText = "Caution";
     statusColor = "dash-status-bg-yellow";
     progressColor = "dash-progress-fill-yellow";
+  } else if (offlineCount > 0) {
+    systemStatusText = "Offline Devices";
+    statusColor = "dash-status-bg-gray";
   }
 
   return (
@@ -103,6 +112,15 @@ export default function Dashboard() {
           </div>
           <div className="dash-metric-icon-box dash-icon-red"><AlertCircle size={24} strokeWidth={2.5} /></div>
         </div>
+
+        <div className="dash-metric-card">
+          <div>
+            <p className="dash-metric-label">Offline</p>
+            <h3 className="dash-metric-value">{offlineCount}</h3>
+          </div>
+          <div className="dash-metric-icon-box dash-icon-gray"><WifiOff size={24} strokeWidth={2.5} /></div>
+        </div>
+
       </div>
 
       <div className="dash-section-card">
@@ -112,6 +130,7 @@ export default function Dashboard() {
             {systemStatusText === 'Caution' && <AlertCircle size={16} strokeWidth={2.5} />}
             {systemStatusText === 'Danger' && <AlertCircle size={16} strokeWidth={2.5} />}
             {systemStatusText === 'Safe' && <Activity size={16} strokeWidth={2.5} />}
+            {systemStatusText === 'Offline Devices' && <WifiOff size={16} strokeWidth={2.5} />}
             <span>{systemStatusText}</span>
           </div>
         </div>

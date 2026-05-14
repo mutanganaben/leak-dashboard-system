@@ -24,17 +24,19 @@ import PipeAgePressureChart from "../components/charts/PipeAgePressureChart";
 import api from "../services/api";
 
 export default function Analytics() {
-  const { nodes } = useContext(NodeContext);
+  const { settings } = useContext(NodeContext);
   const [timeRange, setTimeRange] = useState("24h");
   const [loading, setLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({
     metrics: {
       averagePressure: "0.00 PSI",
       peakPressure: "0.00 PSI",
-      averageUtilization: "0.0%"
+      averageUtilization: "0.0%",
+      readingCount: 0
     },
     statusData: [],
-    utilizationData: []
+    utilizationData: [],
+    pressureTrend: []
   });
 
   const fetchAnalytics = async () => {
@@ -51,14 +53,14 @@ export default function Analytics() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeRange]);
+  }, [timeRange, settings.safeThreshold, settings.warningThreshold]);
 
   const metrics = [
     {
       id: "avg-pressure",
       label: "Average Pressure",
       value: analyticsData.metrics.averagePressure,
-      trend: "Based on selected period",
+      trend: `${analyticsData.metrics.readingCount || 0} readings in range`,
       trendUp: false,
       icon: Activity,
       color: "blue"
@@ -67,7 +69,7 @@ export default function Analytics() {
       id: "peak-pressure",
       label: "Peak Pressure",
       value: analyticsData.metrics.peakPressure,
-      trend: "Based on selected period",
+      trend: "Highest stored reading",
       trendUp: true,
       icon: TrendingUp,
       color: "red"
@@ -76,20 +78,16 @@ export default function Analytics() {
       id: "avg-util",
       label: "Avg Utilization",
       value: analyticsData.metrics.averageUtilization,
-      trend: "Based on selected period",
+      trend: `Thresholds ${Math.round(settings.safeThreshold * 100)}% / ${Math.round(settings.warningThreshold * 100)}%`,
       trendUp: false,
       icon: Activity,
       color: "purple"
     }
   ];
 
-  const chartData = nodes?.map((node, index) => ({ 
-    time: `T${index}`, 
-    pressure: node.pressure 
-  })) || [];
-
   const statusData = analyticsData.statusData;
   const utilizationData = analyticsData.utilizationData;
+  const pressureTrend = analyticsData.pressureTrend || [];
 
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
     const RADIAN = Math.PI / 180;
@@ -187,7 +185,7 @@ export default function Analytics() {
         <div className="analytics-chart-card">
           <h3 className="chart-title">Pressure Trends</h3>
           <div className="chart-container">
-             <PressureChart data={chartData} />
+             <PressureChart data={pressureTrend} />
           </div>
         </div>
       </div>

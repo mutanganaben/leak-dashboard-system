@@ -1,44 +1,57 @@
 import React, { useState, useContext } from "react";
 import "./AddNodeForm.css";
 import { NodeContext } from "../../context/NodeContext";
+import toast from "react-hot-toast";
 
 export default function AddNodeForm() {
   const { addNode } = useContext(NodeContext);
 
   const [form, setForm] = useState({
     name: "",
+    deviceId: "",
     location: "",
     maop: "",
-    pipe_age: "",
+    pipeAge: "",
     latitude: "40.7128",
     longitude: "-74.0060"
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.location || !form.maop || !form.pipe_age) {
-      alert("Please fill all required fields");
+    if (!form.name || !form.deviceId || !form.location || !form.maop || !form.pipeAge) {
+      toast.error("Please fill all required fields");
       return;
     }
 
-    addNode({
-      name: form.name,
-      location: form.location,
-      maop: Number(form.maop),
-      pipe_age: Number(form.pipe_age),
-      latitude: Number(form.latitude),
-      longitude: Number(form.longitude)
-    });
+    try {
+      setSubmitting(true);
+      const savedNode = await addNode({
+        name: form.name.trim(),
+        deviceId: form.deviceId.trim(),
+        location: form.location.trim(),
+        maop: Number(form.maop),
+        pipeAge: Number(form.pipeAge),
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude)
+      });
 
-    setForm({ 
-      name: "", 
-      location: "", 
-      maop: "", 
-      pipe_age: "", 
-      latitude: "40.7128", 
-      longitude: "-74.0060" 
-    });
+      toast.success(`${savedNode.name} saved successfully`);
+      setForm({ 
+        name: "", 
+        deviceId: "",
+        location: "", 
+        maop: "", 
+        pipeAge: "", 
+        latitude: "40.7128", 
+        longitude: "-74.0060" 
+      });
+    } catch (error) {
+      toast.error(error.message || "Unable to add node");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -50,6 +63,13 @@ export default function AddNodeForm() {
           placeholder="Node Name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
+          className="cp-form-input"
+        />
+
+        <input
+          placeholder="Device ID (e.g. sensor-kigali-001)"
+          value={form.deviceId}
+          onChange={(e) => setForm({ ...form, deviceId: e.target.value })}
           className="cp-form-input"
         />
 
@@ -71,8 +91,8 @@ export default function AddNodeForm() {
         <input
           type="number"
           placeholder="Pipe Age (years)"
-          value={form.pipe_age}
-          onChange={(e) => setForm({ ...form, pipe_age: e.target.value })}
+          value={form.pipeAge}
+          onChange={(e) => setForm({ ...form, pipeAge: e.target.value })}
           className="cp-form-input"
         />
 
@@ -93,8 +113,8 @@ export default function AddNodeForm() {
         />
       </div>
 
-      <button className="cp-form-submit">
-        Add Node
+      <button className="cp-form-submit" disabled={submitting}>
+        {submitting ? "Adding Node..." : "Add Node"}
       </button>
     </form>
   );

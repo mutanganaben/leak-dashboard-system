@@ -28,7 +28,13 @@
 
 @media (min-width: 768px) {
     .dash-metrics-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .dash-metrics-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
@@ -100,6 +106,11 @@
     color: #f97316;
 }
 
+.dash-icon-gray {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
 .dash-section-card {
     background-color: var(--color-white);
     border-radius: var(--radius-2xl);
@@ -164,6 +175,11 @@
 .dash-status-bg-red {
     background-color: #fee2e2;
     color: #b91c1c;
+}
+
+.dash-status-bg-gray {
+    background-color: #f3f4f6;
+    color: #4b5563;
 }
 
 .dash-stats-row {

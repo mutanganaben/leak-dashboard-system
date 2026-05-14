@@ -55,7 +55,7 @@ export default function PipeAgePressureChart() {
   
   const data = nodes?.map(node => ({
     name: node.name,
-    age: node.pipe_age || 0,
+    age: node.pipeAge || 0,
     pressure: node.pressure || 0
   })) || [];
 

@@ -6,6 +6,13 @@ import { NodeContext } from "../context/NodeContext";
 import AddNodeForm from "../components/nodes/AddNodeForm";
 import { Search, Filter } from "lucide-react";
 
+const OFFLINE_AFTER_MS = 10 * 60 * 1000;
+
+const isNodeOffline = (lastUpdate) => {
+  if (!lastUpdate) return true;
+  return Date.now() - new Date(lastUpdate).getTime() > OFFLINE_AFTER_MS;
+};
+
 export default function Nodes() {
   const { nodes, settings } = useContext(NodeContext);
 
@@ -13,6 +20,7 @@ export default function Nodes() {
   const [filter, setFilter] = useState("ALL");
 
   const getStatus = (node) => {
+    if (isNodeOffline(node.lastUpdate)) return "OFFLINE";
     const ratio = (node.maop > 0) ? (node.pressure / node.maop) : 0;
     if (ratio >= settings.warningThreshold) return "WARNING";
     if (ratio >= settings.safeThreshold) return "CAUTION";
@@ -29,7 +37,7 @@ export default function Nodes() {
   });
 
   const sortedNodes = [...filteredNodes].sort((a, b) => {
-    const priority = { WARNING: 3, CAUTION: 2, SAFE: 1 };
+    const priority = { WARNING: 4, CAUTION: 3, OFFLINE: 2, SAFE: 1 };
     return priority[getStatus(b)] - priority[getStatus(a)];
   });
 
@@ -68,6 +76,7 @@ export default function Nodes() {
             <option value="SAFE">Safe</option>
             <option value="CAUTION">Caution</option>
             <option value="WARNING">Warning</option>
+            <option value="OFFLINE">Offline</option>
           </select>
         </div>
       </div>

@@ -112,7 +112,7 @@ export default function MapView() {
               <div>
                 <p className="map-label">Device ID</p>
                 <p className="map-code-block map-code-inline">
-                  sensor-{node.id?.toString().padStart(3, '0')}
+                  {node.deviceId || `sensor-${node.id?.toString().padStart(3, '0')}`}
                 </p>
               </div>
             </div>
