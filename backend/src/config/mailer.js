@@ -18,16 +18,16 @@ const sendAlertEmail = async (alert) => {
   const { nodeName, pressure, level, createdAt } = alert;
 
   const mailOptions = {
-    from: `"IoT Water Monitor" <${process.env.EMAIL_USER}>`,
+    from: `"Water Leakage Simulation Monitor" <${process.env.EMAIL_USER}>`,
     to: process.env.ALERT_RECIPIENT_EMAIL,
-    subject: `[${level.toUpperCase()}] Alert — Node: ${nodeName}`,
-    text: `Pressure reading of ${pressure} PSI detected on ${nodeName} at ${createdAt}. Level: ${level}.`,
+    subject: `[${level.toUpperCase()}] Simulation Alert - Node: ${nodeName}`,
+    text: `Simulated pressure reading of ${pressure} PSI detected on ${nodeName} at ${createdAt}. Level: ${level}.`,
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <h2 style="color: ${level === 'warning' ? '#ef4444' : '#f59e0b'};">
           [${level.toUpperCase()}] Alert Detected
         </h2>
-        <p>A new pressure alert has been triggered by the system.</p>
+        <p>A new simulated pressure alert has been triggered by the system.</p>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Node Name:</strong></td>
@@ -48,7 +48,7 @@ const sendAlertEmail = async (alert) => {
         </table>
         <p style="margin-top: 20px;">Please check the <a href="http://localhost:3000/dashboard">monitoring dashboard</a> for more details.</p>
         <hr />
-        <p style="font-size: 0.8em; color: #777;">This is an automated message from the IoT Water Monitor System.</p>
+        <p style="font-size: 0.8em; color: #777;">This is an automated message from the Water Leakage Simulation Monitor.</p>
       </div>
     `
   };

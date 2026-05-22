@@ -135,8 +135,8 @@ const getSystemStatus = asyncHandler(async (req, res) => {
       maintenanceMode: settings.maintenanceMode,
       lastReadingAt: latestReading ? latestReading.timestamp : null,
       message: settings.maintenanceMode
-        ? `Maintenance mode active. ${activeDevices} devices connected.`
-        : `All systems operational. ${activeDevices} devices connected.`
+        ? `Maintenance mode active. ${activeDevices} simulation nodes configured.`
+        : `Simulation monitoring operational. ${activeDevices} simulation nodes configured.`
     }
   });
 });
