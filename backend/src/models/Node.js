@@ -15,11 +15,11 @@ const nodeSchema = new mongoose.Schema({
   },
   deviceId: {
     type: String,
-    required: [true, 'Device ID is required'],
+    required: [true, 'Simulation Node ID is required'],
     unique: true,
     trim: true,
     lowercase: true,
-    maxlength: [80, 'Device ID cannot exceed 80 characters']
+    maxlength: [80, 'Simulation Node ID cannot exceed 80 characters']
   },
   maop: {
     type: Number,
@@ -51,7 +51,7 @@ const nodeSchema = new mongoose.Schema({
 
 nodeSchema.pre('validate', function assignDeviceId() {
   if (!this.deviceId && this._id) {
-    this.deviceId = `sensor-${this._id.toString()}`;
+    this.deviceId = `sim-${this._id.toString()}`;
   }
 });
 

@@ -12,6 +12,12 @@ const pressureReadingSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  source: {
+    type: String,
+    enum: ['simulation', 'manual', 'iot'],
+    default: 'simulation',
+    index: true
+  },
   timestamp: {
     type: Date,
     default: Date.now,

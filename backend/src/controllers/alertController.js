@@ -30,7 +30,7 @@ const shouldSendEmail = (settings) => {
 };
 
 const createAlert = async (node, level, utilization, settings) => {
-  const message = `${level.toUpperCase()} pressure detected on ${node.name} at ${node.location}: ${node.pressure} PSI (${utilization.toFixed(1)}% utilization).`;
+  const message = `${level.toUpperCase()} simulated pressure condition on ${node.name} at ${node.location}: ${node.pressure} PSI (${utilization.toFixed(1)}% utilization).`;
   const alert = await Alert.create({
     nodeId: node._id,
     nodeName: node.name,
