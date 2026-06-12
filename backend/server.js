@@ -22,17 +22,20 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/nodes", nodeRoutes);
-app.use("/api/alerts", alertRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api", settingsRoutes);
-app.use("/api/readings", readingRoutes);
-app.use("/api/simulation", simulationRoutes);
-
-app.get("/api/health", (req, res) => {
+const apiRouter = express.Router();
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/nodes", nodeRoutes);
+apiRouter.use("/alerts", alertRoutes);
+apiRouter.use("/dashboard", dashboardRoutes);
+apiRouter.use("/", settingsRoutes);
+apiRouter.use("/readings", readingRoutes);
+apiRouter.use("/simulation", simulationRoutes);
+apiRouter.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
 
 // 404 Handler
 app.use((req, res, next) => {
