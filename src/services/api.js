@@ -16,8 +16,15 @@ const handleResponse = async (response) => {
       localStorage.removeItem('authToken');
       window.location.href = '/login';
     }
-    const error = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-    throw new Error(error.message || error.error || `Error ${response.status}: ${response.statusText}`);
+
+    try {
+      const responseData = await response.json();
+      const message = responseData?.message || responseData?.error || (typeof responseData === 'string' ? responseData : null);
+      throw new Error(message || `Error ${response.status}: ${response.statusText}`);
+    } catch (jsonError) {
+      const text = await response.text().catch(() => null);
+      throw new Error(text || 'An unknown error occurred');
+    }
   }
   
   const responseData = await response.json();

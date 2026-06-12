@@ -8,6 +8,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -20,15 +21,15 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
+    setLoading(true);
+
     try {
-      //  FIX 1: uses api service (env-aware base URL, no more localhost)
-      //  FIX 2: api.js unwraps { success, data } so data.token works correctly
       const data = await api.post('/auth/login', { email, password });
       localStorage.setItem('authToken', data.token);
       navigate('/dashboard');
+      return;
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -99,8 +100,8 @@ export default function Login() {
             </div>
 
             <div>
-              <button type="submit" className="login-submit-btn">
-                Sign in
+              <button type="submit" className="login-submit-btn" disabled={loading}>
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>
